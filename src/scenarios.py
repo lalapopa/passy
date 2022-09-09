@@ -2,7 +2,10 @@ import time
 import os
 import hashlib
 import getpass
+import pyperclip
 import security
+import password
+
 
 APP_DIR = os.path.join(os.getenv("HOME"), "passy")
 VAULT_FILE = os.path.join(APP_DIR, "main.vault")
@@ -21,30 +24,30 @@ def first_run_check(action_func):
 def get_password():
     inputed_master_password = getpass.getpass("Masterpassword is required: ")
     if master_password_correct(inputed_master_password):
-        with open(VAULT_FILE, "r") as f:
-            encrypted_line = f.readline()
-            decrypted_lines = security.decrypt(
-                encrypted_line, inputed_master_password
-            ).split("\n")
-        all_keys = decrypted_lines[1::]  # first item is master password hash
-        all_vault = [
-            os.path.join(APP_DIR, i) for i in os.listdir(APP_DIR) if "main" not in i
-        ]
-        all_data = []
-        for key in all_keys:
-            for vault_path in all_vault:
-                vault_value = unlock_vault(vault_path, key)
-                if vault_value:
-                    all_data.append(vault_value)
-        print("What pass do u need?")
-        for i, app in enumerate(all_data):
-            print(f"{i+1} - {app[0]}")
-        chosen_app = int(input("Chose app:"))
-        print(
-            f"Login: {all_data[chosen_app-1][1]}\nPassword: {all_data[chosen_app-1][2]}"
-        )
-        if len(all_data[chosen_app - 1]) == 4:
-            print(f"Note: {all_data[chosen_app-1][3]}")
+        all_keys = get_all_keys_from_vault(inputed_master_password)
+        all_vault = get_vaults_path()
+        all_data = parse_vault(all_vault, all_keys)
+        if all_data:
+            print("What pass do u need?")
+            for i, app in enumerate(all_data):
+                print(f"{i+1} - {app[0]}")
+            chosen_app = int(input("Chose app:"))
+        else:
+            print("No passwords in vaults. You can create one using 'passy -a'")
+            return
+
+        if chosen_app <= len(all_data):
+            print(f"Login: {all_data[chosen_app-1][1]}")
+            answer = input("Can I show pass? (y/n) ").lower()
+            print("\033[A                             \033[A")
+            if answer == "y":
+                print(f"Password: {all_data[chosen_app-1][2]}")
+            else:
+                pyperclip.copy(all_data[chosen_app - 1][2])
+            if len(all_data[chosen_app - 1]) == 4:
+                print(f"Note: {all_data[chosen_app-1][3]}")
+        else:
+            print("Your number way out!")
 
 
 @first_run_check
@@ -99,9 +102,10 @@ def master_password_correct(password):
         encrypted_line = f.readline()
         decrypted_lines = security.decrypt(encrypted_line, password).split("\n")
     if get_hash(password) == decrypted_lines[0]:
-        print("Masterpassword is correct!")
+        print("\033[A                             \033[A")
         return True
     else:
+        print("\033[A                             \033[A")
         print("Masterpassword is wrong!")
         return False
 
@@ -111,7 +115,7 @@ def get_input_password():
     if user_password:
         return user_password
     else:
-        return "[TODO] Password generation"
+        return password.generate()
 
 
 def add_key_to_vault(key):
@@ -130,9 +134,12 @@ def add_key_to_vault(key):
 
 
 def save_text_in_vault(text, key):
-    with open(
-        os.path.join(APP_DIR, security.generate_random_light_string(5) + ".vault"), "w"
-    ) as f:
+    all_files = os.listdir(APP_DIR)
+    generated_vault_name = security.generate_random_light_string(5) + ".vault"
+    while generated_vault_name in all_files:
+        generated_vault_name = security.generate_random_light_string(5) + ".vault"
+
+    with open(os.path.join(APP_DIR, generated_vault_name), "w") as f:
         f.write(security.encrypt(text, key))
 
 
@@ -143,3 +150,24 @@ def unlock_vault(path, key):
     if len(decrypted_lines) >= 3 and len(decrypted_lines) <= 4:
         return decrypted_lines
     return False
+
+
+def get_all_keys_from_vault(password):
+    with open(VAULT_FILE, "r") as f:
+        encrypted_line = f.readline()
+        decrypted_lines = security.decrypt(encrypted_line, password).split("\n")
+    return decrypted_lines[1::]  # first item is master password hash
+
+
+def get_vaults_path():
+    return [os.path.join(APP_DIR, i) for i in os.listdir(APP_DIR) if "main" not in i]
+
+
+def parse_vault(vault_paths, keys):
+    all_data = []
+    for key in keys:
+        for vault_path in vault_paths:
+            vault_value = unlock_vault(vault_path, key)
+            if vault_value:
+                all_data.append(vault_value)
+    return all_data
