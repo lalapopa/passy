@@ -31,7 +31,7 @@ def get_password():
             print("What pass do u need?")
             for i, app in enumerate(all_data):
                 print(f"{i+1} - {app[0]}")
-            chosen_app = int(input("Chose app:"))
+            chosen_app = int(input("Choose app:"))
         else:
             print("No passwords in vaults. You can create one using 'passy -a'")
             return

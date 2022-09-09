@@ -1,3 +1,5 @@
+# PASSY
+
 <p align="center">
   <img src="https://www.yeoandyeo.com/wp-content/uploads/07_02_21_1253437873_AAB_560x292.jpg" />
 </p>
@@ -8,7 +10,9 @@
 1. `pip3 install -r requirements.txt`
 1. `pyinstaller --add-data "./src/words_alpha.txt:." --onefile ./src/passy.py`
 1. `cp ./dist/passy ~/.local/bin`
-1.  ```passy -h
+1.  
+```
+passy -h
 usage: passy [-h] [-g] [-a]
 
 optional arguments:
@@ -26,7 +30,8 @@ will create `~/passy` directory in home folder.
 All your password will be in '/home/lalapopa/passy'
 Input new master password: 123
 Rewrite it again: 123
-[goes -a scenario from example section]
+[goes -a scenario from section "CLI Interaction example"]
+```
 
 # CLI interaction example 
 
@@ -34,20 +39,20 @@ Rewrite it again: 123
 
 ```
 $ passy -a
-> For what site or application: google.com
-> Username: john@outlook.com
-> Password: [if you wanna generate just press ENTER]
-> Rewrite same password: [if you wanna generate just press ENTER]
-> Note: work mail
-> Masterpassword is required: 123
+For what site or application: google.com
+Username: john@outlook.com
+Password: [if you wanna generate just press ENTER]
+Rewrite same password: [if you wanna generate just press ENTER]
+Note: work mail
+Masterpassword is required: 123
 Key written in main.vault
 ```
 
 [-g]    get password
 ```
 $ passy -g 
-> Masterpassword is required: 123
-> What pass do u need? 
+Masterpassword is required: 123
+What pass do u need? 
 1 - DuunoSite.com 
 2 - Github
 3 - shittypass.com
@@ -58,6 +63,7 @@ Can I show pass? (y/n) [automatically copy to clipboard if you type `n`]
 Note: work mail 
 ```
 
+P.S **don't** use 123 password
 
 
 
