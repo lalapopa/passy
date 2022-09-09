@@ -1,4 +1,6 @@
 import random
+import os
+import sys
 import string
 
 
@@ -22,7 +24,7 @@ def generate():
 
 
 def get_random_words():
-    with open("/home/lalapopa/Lab/python/codes/passy/words_alpha.txt", "r") as f:
+    with open(resource_path("words_alpha.txt"), "r") as f:
         words = f.readlines()
     return words[random.randint(0, len(words) - 1)].strip()
 
@@ -36,8 +38,14 @@ def make_manipulation(word):
     return "".join(word)
 
 
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
+
 def main():
-    print(generate_password())
+    print(generate())
 
 
 if __name__ == "__main__":

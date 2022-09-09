@@ -56,7 +56,7 @@ def add_password():
     username = input("Username: ")
     password = get_input_password()
     note = input("Note: ")
-    text_for_key = f"{application_name}\n{username}\n{password}\n{note}\n{time.time()}"
+    text_for_key = f"{security.generate_random_light_string(8)}{application_name}\n{username}\n{password}\n{note}\n{time.time()}"
     key = get_hash(text_for_key)
     add_key_to_vault(key)
     text_for_save = f"{application_name}\n{username}\n{password}\n{note}"
@@ -170,4 +170,6 @@ def parse_vault(vault_paths, keys):
             vault_value = unlock_vault(vault_path, key)
             if vault_value:
                 all_data.append(vault_value)
+                vault_paths.remove(vault_path)
+                break
     return all_data
