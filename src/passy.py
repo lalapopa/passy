@@ -10,6 +10,9 @@ def main():
     parser.add_argument(
         "-a", "--add_password", action="store_true", help="Add password"
     )
+    parser.add_argument(
+        "-d", "--delete_password", action="store_true", help="Delete password"
+    )
 
     args = parser.parse_args()
 
@@ -18,6 +21,9 @@ def main():
 
     if args.add_password:
         scenarios.add_password()
+
+    if args.delete_password:
+        scenarios.delete_password()
 
 
 if __name__ == "__main__":

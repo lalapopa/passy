@@ -1,3 +1,5 @@
+from typing import Sequence
+from dataclasses import dataclass
 import time
 import os
 import hashlib
@@ -7,7 +9,7 @@ import security
 import password
 
 
-APP_DIR = os.path.join(os.getenv("HOME"), "passy")
+APP_DIR = os.path.join(os.getenv("HOME"), ".passy")
 VAULT_FILE = os.path.join(APP_DIR, "main.vault")
 
 
@@ -20,6 +22,13 @@ def first_run_check(action_func):
     return wrapper
 
 
+@dataclass
+class Vault:
+    path: str
+    key: str
+    load: list[str]
+
+
 @first_run_check
 def get_password():
     inputed_master_password = getpass.getpass("Masterpassword is required: ")
@@ -29,23 +38,24 @@ def get_password():
         all_data = parse_vault(all_vault, all_keys)
         if all_data:
             print("What pass do u need?")
-            for i, app in enumerate(all_data):
-                print(f"{i+1} - {app[0]}")
-            chosen_app = int(input("Choose app:"))
+            for i, vault in enumerate(all_data):
+                print(f"{i+1} - {vault.load[0]}")
+            chosen_app = int(input("Choose app: "))
         else:
             print("No passwords in vaults. You can create one using 'passy -a'")
             return
 
-        if chosen_app <= len(all_data):
-            print(f"Login: {all_data[chosen_app-1][1]}")
+        if chosen_app <= len(all_data) and chosen_app >= 1:
+            chosen_vault = all_data[chosen_app - 1]
+            print(f"Login: {chosen_vault.load[1]}")
             answer = input("Can I show pass? (y/n) ").lower()
             print("\033[A                             \033[A")
             if answer == "y":
-                print(f"Password: {all_data[chosen_app-1][2]}")
+                print(f"Password: {chosen_vault.load[2]}")
             else:
-                pyperclip.copy(all_data[chosen_app - 1][2])
-            if len(all_data[chosen_app - 1]) == 4:
-                print(f"Note: {all_data[chosen_app-1][3]}")
+                pyperclip.copy(chosen_vault.load[2])
+            if len(chosen_vault.load) == 4:
+                print(f"Note: {chosen_vault.load[3]}")
         else:
             print("Your number way out!")
 
@@ -61,6 +71,43 @@ def add_password():
     add_key_to_vault(key)
     text_for_save = f"{application_name}\n{username}\n{password}\n{note}"
     save_text_in_vault(text_for_save, key)
+
+
+@first_run_check
+def delete_password():
+    inputed_master_password = getpass.getpass("Masterpassword is required: ")
+    if master_password_correct(inputed_master_password):
+        all_keys = get_all_keys_from_vault(inputed_master_password)
+        all_vault = get_vaults_path()
+        all_data = parse_vault(all_vault, all_keys)
+        if all_data:
+            print("What pass u want delete?")
+            for i, app in enumerate(all_data):
+                print(f"{i+1} - {app.load[0]}")
+            chosen_app = int(input("Choose app:"))
+        else:
+            print("Nothing in vault. You can create one using 'passy -a'")
+            return
+
+        if chosen_app <= len(all_data):
+            chosen_vault = all_data[chosen_app - 1]
+            confirm = confirm_deletion(chosen_vault)
+            if confirm:
+                os.remove(chosen_vault.path)
+                with open(VAULT_FILE, "r") as f:
+                    encrypted_line = f.readline()
+                    decrypted_lines = security.decrypt(
+                        encrypted_line, inputed_master_password
+                    ).split("\n")
+                decrypted_lines.remove(chosen_vault.key)
+                new_secret = "\n".join(decrypted_lines)
+                with open(VAULT_FILE, "w") as f:
+                    f.write(security.encrypt(new_secret, inputed_master_password))
+                    print(f"Key for {chosen_vault.load[0]} was deleted.")
+            else:
+                print("You typed bullshit, I wont delete that")
+        else:
+            print("Your number way out!")
 
 
 def is_first_setup():
@@ -163,13 +210,22 @@ def get_vaults_path():
     return [os.path.join(APP_DIR, i) for i in os.listdir(APP_DIR) if "main" not in i]
 
 
-def parse_vault(vault_paths, keys):
+def parse_vault(vault_paths, keys) -> Sequence[Vault]:
     all_data = []
     for key in keys:
         for vault_path in vault_paths:
             vault_value = unlock_vault(vault_path, key)
             if vault_value:
-                all_data.append(vault_value)
+                vault = Vault(path=vault_path, key=key, load=vault_value)
+                all_data.append(vault)
                 vault_paths.remove(vault_path)
                 break
     return all_data
+
+
+def confirm_deletion(vault):
+    verify_login_string = input(f"Type login '{vault.load[1]}' for {vault.load[0]}: ")
+    if verify_login_string == vault.load[1]:
+        return True
+    else:
+        return False
