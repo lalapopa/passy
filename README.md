@@ -10,7 +10,6 @@
 1. `pip3 install -r requirements.txt`
 1. `pyinstaller --add-data "./src/words_alpha.txt:." --onefile ./src/passy.py`
 1. `cp ./dist/passy ~/.local/bin`
-1.  
 ```
 passy -h
 usage: passy [-h] [-g] [-a]
@@ -64,7 +63,4 @@ Note: work mail
 ```
 
 P.S **don't** use 123 password
-
-
-
 

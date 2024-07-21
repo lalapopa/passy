@@ -40,37 +40,29 @@ def get_password():
             print("What pass do u need?")
             for i, vault in enumerate(all_data):
                 print(f"{i+1} - {vault.load[0]}")
-            chosen_app = int(input("Choose app: "))
+
+            chosen_app = get_chosen_app(len(all_data))
+            chosen_vault = all_data[chosen_app - 1]
+            render_chosen_app(chosen_vault)
         else:
             print("No passwords in vaults. You can create one using 'passy -a'")
             return
-
-        if chosen_app <= len(all_data) and chosen_app >= 1:
-            chosen_vault = all_data[chosen_app - 1]
-            print(f"Login: {chosen_vault.load[1]}")
-            answer = input("Can I show pass? (y/n) ").lower()
-            print("\033[A                             \033[A")
-            if answer == "y":
-                print(f"Password: {chosen_vault.load[2]}")
-            else:
-                pyperclip.copy(chosen_vault.load[2])
-            if len(chosen_vault.load) == 4:
-                print(f"Note: {chosen_vault.load[3]}")
-        else:
-            print("Your number way out!")
 
 
 @first_run_check
 def add_password():
     application_name = input("For what site or application: ")
     username = input("Username: ")
-    password = get_input_password()
-    note = input("Note: ")
-    text_for_key = f"{security.generate_random_light_string(8)}{application_name}\n{username}\n{password}\n{note}\n{time.time()}"
-    key = get_hash(text_for_key)
-    add_key_to_vault(key)
-    text_for_save = f"{application_name}\n{username}\n{password}\n{note}"
-    save_text_in_vault(text_for_save, key)
+    if application_name and username:
+        password = get_input_password()
+        note = input("Note: ")
+        text_for_key = f"{security.generate_random_light_string(8)}{application_name}\n{username}\n{password}\n{note}\n{time.time()}"
+        key = get_hash(text_for_key)
+        add_key_to_vault(key)
+        text_for_save = f"{application_name}\n{username}\n{password}\n{note}"
+        save_text_in_vault(text_for_save, key)
+    else:
+        return add_password()
 
 
 @first_run_check
@@ -84,30 +76,12 @@ def delete_password():
             print("What pass u want delete?")
             for i, app in enumerate(all_data):
                 print(f"{i+1} - {app.load[0]}")
-            chosen_app = int(input("Choose app:"))
-        else:
-            print("Nothing in vault. You can create one using 'passy -a'")
-            return
-
-        if chosen_app <= len(all_data):
+            chosen_app = get_chosen_app(len(all_data))
             chosen_vault = all_data[chosen_app - 1]
-            confirm = confirm_deletion(chosen_vault)
-            if confirm:
-                os.remove(chosen_vault.path)
-                with open(VAULT_FILE, "r") as f:
-                    encrypted_line = f.readline()
-                    decrypted_lines = security.decrypt(
-                        encrypted_line, inputed_master_password
-                    ).split("\n")
-                decrypted_lines.remove(chosen_vault.key)
-                new_secret = "\n".join(decrypted_lines)
-                with open(VAULT_FILE, "w") as f:
-                    f.write(security.encrypt(new_secret, inputed_master_password))
-                    print(f"Key for {chosen_vault.load[0]} was deleted.")
-            else:
-                print("You typed bullshit, I wont delete that")
+            render_deletion_app(inputed_master_password, chosen_vault)
         else:
-            print("Your number way out!")
+            print("Vault empty. You can create one using `passy -a`")
+            return
 
 
 def is_first_setup():
@@ -117,10 +91,53 @@ def is_first_setup():
     return True
 
 
+def render_chosen_app(vault):
+    print(f"Login: {vault.load[1]}")
+    answer = input("Can I show pass? (y/n) ").lower()
+    print("\033[A                             \033[A")
+    if answer == "y":
+        print(f"Password: {vault.load[2]}")
+    else:
+        pyperclip.copy(vault.load[2])
+    if len(vault.load) == 4:
+        print(f"Note: {vault.load[3]}")
+
+
+def render_deletion_app(master_pass, vault):
+    confirmed = confirm_deletion(vault)
+    if confirmed:
+        os.remove(vault.path)
+        with open(VAULT_FILE, "r") as f:
+            encrypted_line = f.readline()
+            decrypted_lines = security.decrypt(encrypted_line, master_pass).split("\n")
+        decrypted_lines.remove(vault.key)
+        new_secret = "\n".join(decrypted_lines)
+        with open(VAULT_FILE, "w") as f:
+            f.write(security.encrypt(new_secret, master_pass))
+            print(f"Key for {vault.load[0]} was deleted.")
+    else:
+        print("You typed bullshit, I wont delete that")
+
+
+def get_chosen_app(max_number):
+    if max_number == 1:
+        return 1
+    chosen_app = False
+    while not chosen_app:
+        try:
+            chosen_app = int(input(f"Choose app [1 - {max_number}]: "))
+        except ValueError:
+            print("\033[A                             \033[A")
+            chosen_app = False
+        if chosen_app > max_number or chosen_app < 1:
+            chosen_app = False
+    return chosen_app
+
+
 def make_first_setup():
     if not os.path.exists(APP_DIR):
         os.mkdir(APP_DIR)
-    print(f"All your password will be in '{APP_DIR}'")
+    print(f"All passwords will be stored in '{APP_DIR}'")
     master_password = input_password_verify(
         "Input new master password: ", "Rewrite it again: "
     )
@@ -149,7 +166,7 @@ def master_password_correct(password):
         encrypted_line = f.readline()
         decrypted_lines = security.decrypt(encrypted_line, password).split("\n")
     if get_hash(password) == decrypted_lines[0]:
-        print("\033[A                             \033[A")
+        print("\033[A                             \033[A")  # Clean current line
         return True
     else:
         print("\033[A                             \033[A")
@@ -158,7 +175,9 @@ def master_password_correct(password):
 
 
 def get_input_password():
-    user_password = input_password_verify("Password: ", "Rewrite same password: ")
+    user_password = input_password_verify(
+        "Password (default random): ", "Rewrite same password: "
+    )
     if user_password:
         return user_password
     else:
@@ -224,7 +243,9 @@ def parse_vault(vault_paths, keys) -> Sequence[Vault]:
 
 
 def confirm_deletion(vault):
-    verify_login_string = input(f"Type login '{vault.load[1]}' for {vault.load[0]}: ")
+    verify_login_string = input(
+        f"For deletion type login '{vault.load[1]}' for {vault.load[0]}: "
+    )
     if verify_login_string == vault.load[1]:
         return True
     else:

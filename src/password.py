@@ -9,6 +9,7 @@ def generate_random_string(length):
     password = "".join(random.choice(characters) for i in range(length))
     return password
 
+
 def generate():
     words_amount = random.randint(6, 16)
     password = ""
@@ -45,11 +46,13 @@ def resource_path(relative_path):
     base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
+
 def is_correct_password(password):
     if "\\" not in password:
         return True
     else:
         return False
+
 
 def main():
     while True:

@@ -3,31 +3,27 @@ import scenarios
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-g", "--get_password", action="store_true", help="Get password"
+    parser = argparse.ArgumentParser(
+        prog="passy", description="Sussy CLI password manager"
     )
-    parser.add_argument(
-        "-a", "--add_password", action="store_true", help="Add password"
-    )
-    parser.add_argument(
-        "-d", "--delete_password", action="store_true", help="Delete password"
-    )
+    parser.add_argument("-g", "--get_pass", action="store_true", help="get password")
+    parser.add_argument("-a", "--add_pass", action="store_true", help="add password")
+    parser.add_argument("-d", "--del_pass", action="store_true", help="remove password")
 
     args = parser.parse_args()
 
-    if args.get_password:
+    if args.get_pass:
         scenarios.get_password()
-
-    if args.add_password:
+    elif args.add_pass:
         scenarios.add_password()
-
-    if args.delete_password:
+    elif args.del_pass:
         scenarios.delete_password()
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("^C")
+        pass
