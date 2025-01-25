@@ -207,7 +207,12 @@ def get_all_keys_from_vault(password):
 
 
 def get_vaults_path():
-    return [os.path.join(APP_DIR, i) for i in os.listdir(APP_DIR) if "main" not in i]
+    vault_list = []
+    for file_name in os.listdir(APP_DIR):
+        if ("main" not in file_name) and (".vault" in file_name):
+            vault_list.append(os.path.join(APP_DIR, file_name))
+    print(vault_list)
+    return vault_list
 
 
 def parse_vault(vault_paths, keys) -> Sequence[Vault]:
