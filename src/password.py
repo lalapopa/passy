@@ -13,14 +13,17 @@ def generate_random_string(length):
 def generate():
     words_amount = random.randint(6, 16)
     password = ""
+    max_length = 32
     for i in range(words_amount):
         taken_word = get_random_words()
         password += make_manipulation(taken_word)
         password += "_"
-    if "\\" not in password:
+    if len(password) > max_length:
+        password = password[0:max_length]
+    if is_correct_password(password):
         return password
     else:
-        generate()
+        return generate()
 
 
 def get_random_words():
@@ -44,8 +47,16 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
+def is_correct_password(password):
+    if "\\" not in password:
+        return True
+    else:
+        return False
+
+
 def main():
-    print(generate())
+    while True:
+        print(generate())
 
 
 if __name__ == "__main__":

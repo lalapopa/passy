@@ -68,14 +68,14 @@ def main():
 
     # First let us encrypt secret message
     encrypted = encrypt(
-        "S",
+        "SECRET_TEXT",
         password,
     )
     print(encrypted)
     check_pass = input("For unlock: ")
     # Let us decrypt using our original password
     decrypted = decrypt(encrypted, check_pass)
-    print(bytes.decode(decrypted))
+    print(decrypted)
 
 
 if __name__ == "__main__":
