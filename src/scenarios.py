@@ -230,7 +230,6 @@ def get_vaults_path():
     for file_name in os.listdir(APP_DIR):
         if ("main" not in file_name) and (".vault" in file_name):
             vault_list.append(os.path.join(APP_DIR, file_name))
-    print(vault_list)
     return vault_list
 
 
